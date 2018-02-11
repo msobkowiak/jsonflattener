@@ -17,21 +17,25 @@ const (
 type jsonflattener struct {
 }
 
-// NewStateMachine returns a new state machine
+// NewStateMachine returns a json flattener
 func NewJsonFlattener() flattener.Flattener {
 	return &jsonflattener{}
 }
 
+// Flatten transforms nested json structure into flat key, value pars
 func (f *jsonflattener) Flatten(data []byte) (map[string]interface{}, error) {
-	var (
-		in  map[string]interface{}
-		out = make(map[string]interface{})
-	)
+	var in map[string]interface{}
 
 	err := json.Unmarshal(data, &in)
 	if err != nil {
 		return nil, errors.New("Invalid input:" + err.Error())
 	}
+
+	return f.flatten(in)
+}
+
+func (f *jsonflattener) flatten(in map[string]interface{}) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
 
 	for k, v := range in {
 		switch t := v.(type) {
