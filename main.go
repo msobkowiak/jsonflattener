@@ -2,57 +2,36 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 
 	"jsonflatterner/flattener/json"
 )
 
 func main() {
-	// read a json file
-	// flatten
-	// print result
-
-	// TODO: read json file path form console
-	// TODO: add .json extension??
-	//json, err := ioutil.ReadFile("testdata.json")
-	//if err != nil {
-	//	fmt.Println("Error on reading data from file" + err.Error())
-	//	return
-	//}
-
-	input := []byte(
-		`{
-			"format": "long",
-			"type": "objects",
-			"offset": 0,
-			"limit": 10,
-			"facets": {},
-			"objecttypes": ["objekte"],
-			"language": "de - DE",
-			"count": 2,
-			"took": 165,
-			"objects": [{
-				"_acl": [{
-					"_id": 1335359,
-					"date_created": "2016 - 08 - 22 T19: 26: 10 + 02: 00",
-					"who": [{
-							"first_name": "Joe",
-							"last_name": "Doe"
-						},
-						{
-							"first_name": "Anna",
-							"last_name": "Smith"
-						}
-					]
-				}]
-			}]
-		}`,
-	)
-
-	jf := json.NewJsonFlattener()
-	output, err := jf.Flatten(input)
-	if err != nil {
-		fmt.Printf("Something went wrong: %s\n", err.Error())
+	if len(os.Args) <= 1 {
+		fmt.Println("Please provide path to json file")
+		os.Exit(1)
 	}
 
-	fmt.Println(output)
+	input, err := ioutil.ReadFile(os.Args[1])
+	if err != nil {
+		fmt.Println("Error on reading data from file" + err.Error())
+		os.Exit(1)
+	}
+
+	f := json.NewJsonFlattener()
+	output, err := f.Flatten(input)
+	if err != nil {
+		fmt.Printf("Something went wrong: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	printMap(output)
+}
+
+func printMap(data map[string]interface{}) {
+	for k, v := range data {
+		fmt.Printf("%s: %#v\n", k, v)
+	}
 }
