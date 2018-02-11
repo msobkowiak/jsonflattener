@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/msobkowiak/jsonflatterner/flattener/json"
+	"jsonflatterner/flattener/json"
 )
 
 func main() {
@@ -18,11 +18,13 @@ func main() {
 	//	return
 	//}
 
-	input := []byte(`{"name":"Joe", "address":{"street":"123 Main St."}}`)
-	output, err :=  json.Flatten(input, ".")
+	input := []byte(`{"name":"Joe", "last_name": "Doe", "age": 25, "hobby": ["travel", "sport", "books"], "address":{"street":"123 Main St."}}`)
+
+	jf := json.NewJsonFlattener()
+	output, err := jf.Flatten(input, ".")
 	if err != nil {
 		fmt.Printf("Something went wrong: %s\n", err.Error())
 	}
 
-	fmt.Print(string(output))
+	fmt.Println(string(output))
 }
