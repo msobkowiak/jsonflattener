@@ -1,5 +1,5 @@
 package flattener
 
 type Flattener interface {
-	Flatten(data []byte, delimiter string) ([]byte, error)
+	Flatten(data []byte) (map[string]interface{}, error)
 }

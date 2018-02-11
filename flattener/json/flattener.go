@@ -3,14 +3,15 @@ package json
 import (
 	"encoding/json"
 	"errors"
-	"jsonflatterner/flattener"
 	"strconv"
+
+	"jsonflatterner/flattener"
 )
 
 const (
-	deliminator_dot = "."
-	deliminator_left_bracket = "["
-	deliminator_right_bracket = "]"
+	deliminatorDot          = "."
+	deliminatorLeftBracket  = "["
+	deliminatorRightBracket = "]"
 )
 
 type jsonflattener struct {
@@ -21,7 +22,7 @@ func NewJsonFlattener() flattener.Flattener {
 	return &jsonflattener{}
 }
 
-func (f *jsonflattener) Flatten(data []byte, delimiter string) ([]byte, error) {
+func (f *jsonflattener) Flatten(data []byte) (map[string]interface{}, error) {
 	var (
 		in  map[string]interface{}
 		out = make(map[string]interface{})
@@ -37,94 +38,96 @@ func (f *jsonflattener) Flatten(data []byte, delimiter string) ([]byte, error) {
 		case string, int, float64, bool, nil:
 			out[k] = v
 		case map[string]interface{}:
-			nested, err := f.flattenMap(t, k, deliminator_dot)
+			nested, err := f.flattenMap(t, k)
 			if err != nil {
 				return nil, err
 			}
 			out = joinMaps(out, nested)
 		case []interface{}:
-			nested, err := f.flattenArray(t, k, "")
+			nested, err := f.flattenArray(t, k)
 			if err != nil {
 				return nil, err
 			}
 			out = joinMaps(out, nested)
-		default:
-			// do nothing
 		}
 	}
 
-	return json.Marshal(out)
+	return out, nil
 }
 
-func (f *jsonflattener) flattenMap(in map[string]interface{}, parent string, delimiter string) (map[string]interface{}, error) {
+func (f *jsonflattener) flattenMap(in map[string]interface{}, parent string) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 
 	for k, v := range in {
 		if len(parent) > 0 {
-			k = parent + delimiter + k
+			k = parent + deliminatorDot + k
 		}
 
 		switch t := v.(type) {
 		case string, int, float64, bool, nil:
 			out[k] = v
 		case map[string]interface{}:
-			out, err := f.flattenMap(t, k, delimiter)
+			nested, err := f.flattenMap(t, k)
 			if err != nil {
 				return nil, err
 			}
 			for key, value := range out {
-				out[key] = value
+				nested[key] = value
 			}
+			out = joinMaps(out, nested)
 		case []interface{}:
-			out, err := f.flattenArray(t, k, delimiter)
+			nested, err := f.flattenArray(t, k)
 			if err != nil {
 				return nil, err
 			}
 			for key, value := range out {
-				out[key] = value
+				nested[key] = value
 			}
+			out = joinMaps(out, nested)
 		}
 	}
 
 	return out, nil
 }
 
-func (f *jsonflattener) flattenArray(in []interface{}, parent string, delimiter string) (map[string]interface{}, error) {
+func (f *jsonflattener) flattenArray(in []interface{}, parent string) (map[string]interface{}, error) {
 	var (
-		out  = make(map[string]interface{})
+		out = make(map[string]interface{})
 		k   string
 	)
+
 	for i, v := range in {
 		if len(parent) > 0 {
-			k = parent + deliminator_left_bracket + strconv.Itoa(i) + deliminator_right_bracket
+			k = parent + deliminatorLeftBracket + strconv.Itoa(i) + deliminatorRightBracket
 		}
 
 		switch t := v.(type) {
 		case string, int, float64, bool, nil:
 			out[k] = v
 		case map[string]interface{}:
-			out, err := f.flattenMap(t, k, delimiter)
+			nested, err := f.flattenMap(t, k)
 			if err != nil {
 				return nil, err
 			}
 			for key, value := range out {
-				out[key] = value
+				nested[key] = value
 			}
+			out = joinMaps(out, nested)
 		case []interface{}:
-			out, err := f.flattenArray(t, k, delimiter)
+			nested, err := f.flattenArray(t, k)
 			if err != nil {
 				return nil, err
 			}
 			for key, value := range out {
-				out[key] = value
+				nested[key] = value
 			}
+			out = joinMaps(out, nested)
 		}
 	}
 
 	return out, nil
 }
 
-// utils
 func joinMaps(m1 map[string]interface{}, m2 map[string]interface{}) map[string]interface{} {
 	for k, v := range m1 {
 		m2[k] = v
@@ -132,4 +135,3 @@ func joinMaps(m1 map[string]interface{}, m2 map[string]interface{}) map[string]i
 
 	return m2
 }
-
